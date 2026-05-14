@@ -3,14 +3,14 @@ import math as mt
 
 frame_size = 64
 time_step = 1
-cache = np.zeros(frame_size, frame_size)
+cache = np.zeros[frame_size, frame_size]
 
 def initVor(x: int, y: int) -> int: 
     return x + y
 
 # advection, biot-savart MC solver
 
-def biotSavartSolver(x: np.array[2], time: int, n_samples: int) -> int:
+def biotSavartSolver(x: np.array[1], time: int, n_samples: int) -> int:
     for i in range(n_samples):
         y_i = np.random(0, frame_size, size=(n_samples,2))
 
@@ -34,6 +34,8 @@ def recursiveSolver(x: np.array[1], time: int, n_samples: int) -> np.array[1]:
         return initVor(x[0], x[1])
     
     nposition = x - time_step*biotSavartSolver(x, ntime, n_samples)
+    # i dont care abt error handling rn
+    cachingSolver(nposition, time)
     return nposition
 
 
@@ -53,7 +55,7 @@ def cachingSolver(x: np.array[1], time: int) -> int:
     return 0
 
 
-def nearestCoord(x) -> np.array[1]:
+def nearestCoord(x: np.array[1]) -> np.array[1]:
     
     if (x[0] % 1 >= 0.5):
         nearestX = mt.ceil(x[0])
@@ -75,7 +77,7 @@ def nearestCoord(x) -> np.array[1]:
     return nearCoord
 
 
-def cacheFetch(x, time) -> np.array[1]:
+def cacheFetch(x: np.array[1], time: int) -> np.array[1]:
     
     gridPos = nearestCoord(x)
     return cache[gridPos[0],gridPos[1]]
