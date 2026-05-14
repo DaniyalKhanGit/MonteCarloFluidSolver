@@ -17,8 +17,9 @@ Y = np.array((0, 64))
 for x in range(64):
     for y in range(64):
         temp = np.array((x, y))
-        U[x - 1][y - 1] = bs.recursiveSolver(temp, time)[0]
-        V[x - 1][y - 1] = bs.recursiveSolver(temp, time)[1]
+        gridentry = bs.monteCarloEstimator(temp, time)
+        U[x][y] = gridentry[0]
+        V[x][y] = gridentry[1]
 
 
 
