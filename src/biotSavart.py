@@ -64,8 +64,9 @@ def integralEstimation(x: np.array[1], time: int) -> np.array[1]:
 
     integral_samples = np.random.uniform(0, frame_size, size=(n_samples, 2))
     diff = x - integral_samples
-    # this is current fixed to only time samples 1, however likely once montecarloestimator is finished ill change it
-    vorticity = initVor(integral_samples)
+    # changed to montecarloestimator, though subject to change more
+    vorticity = monteCarloEstimator(x, time)
+
     kernel = diff / 2*mt.pi*np.linalg.norm(diff, axis=1)
     cross_product = np.cross(vorticity, kernel)
 
@@ -73,17 +74,22 @@ def integralEstimation(x: np.array[1], time: int) -> np.array[1]:
 
 def monteCarloEstimator(x: np.array[1], time: int) -> int:
 
-    fetchedCache = cacheFetch(x, time)
-
     if (time == 0):
         return initVor(x)
-    # check the cache if theres any entry
-    elif (fetchedCache != 0):
-        pass
+    # check the cache if theres any entry (ill do this after basic implement)
+    fetchedCache = cacheFetch(x)
+    if (fetchedCache != 0):
+        if (fetchedCache[1] == time - time_step):
+            newX = fetchedCache[0]
 
     y = np.random(0, frame_size, size=(1, 2))
+    newX = x - time_step * integralEstimation(y, time - time_step)
 
-    return monteCarloEstimator(x - time_step * integralEstimation(y, time - time_step),
+    # once we find this newX we have to insert it into the cache accordingly
+
+    cachingSolver(newX, time - time_step)
+
+    return monteCarloEstimator(newX,
                                (time - time_step))
 
 
@@ -124,7 +130,7 @@ def nearestCoord(x: np.array[1]) -> np.array[1]:
     return nearCoord
 
 # fetches the nearest adjacent position from the cache
-def cacheFetch(x: np.array[1], time: int) -> np.array[1]:
+def cacheFetch(x: np.array[1]) -> np.array[1]:
     
     gridPos = nearestCoord(x)
     return cache[gridPos[0],gridPos[1]]
