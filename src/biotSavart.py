@@ -6,7 +6,7 @@ time_step = 1
 cache = np.zeros((frame_size, frame_size))
 n_samples = 100
 
-def initVor(x: np.array[1]) -> int: 
+def initVor(x: np.ndarray) -> int: 
     return x[0] + x[1]
 
 # advection, biot-savart MC solver
@@ -60,19 +60,23 @@ def recursiveSolver(x: np.array[1], time: int, n_samples: int) -> np.array[1]:
 # we entirely redoing the way that the biot-savart is calculated
 
 
-def integralEstimation(x: np.array[1], time: int) -> np.array[1]:
+def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
+
+    print(type(x), x, "integralEstimator")
 
     integral_samples = np.random.uniform(0, frame_size, size=(n_samples, 2))
     diff = x - integral_samples
     # changed to montecarloestimator, though subject to change more
     vorticity = monteCarloEstimator(x, time)
-
+    
     kernel = diff / 2*mt.pi*np.linalg.norm(diff, axis=1)
     cross_product = np.cross(vorticity, kernel)
 
     return cross_product / n_samples
 
-def monteCarloEstimator(x: np.array[1], time: int) -> int:
+def monteCarloEstimator(x: np.ndarray, time: int) -> int:
+
+    print(type(x), x, "MC estimator")
 
     if (time == 0):
         return initVor(x)
@@ -82,7 +86,7 @@ def monteCarloEstimator(x: np.array[1], time: int) -> int:
         if (fetchedCache[1] == time - time_step):
             newX = fetchedCache[0]
 
-    y = np.random(0, frame_size, size=(1, 2))
+    y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
     newX = x - time_step * integralEstimation(y, time - time_step)
 
     # once we find this newX we have to insert it into the cache accordingly
@@ -96,7 +100,7 @@ def monteCarloEstimator(x: np.array[1], time: int) -> int:
 # caching handled here
 # return of 0 means unsuccessful, anything else is good
 # updates the cache with a newer entry
-def cachingSolver(x: np.array[1], time: int) -> int:
+def cachingSolver(x: np.ndarray, time: int) -> int:
     
     if (cache[x[0]][x[1]] == 0):
         cache[x[0]][x[1]] = [x, time]
@@ -108,7 +112,9 @@ def cachingSolver(x: np.array[1], time: int) -> int:
     
     return 0
 
-def nearestCoord(x: np.array[1]) -> np.array[1]:
+def nearestCoord(x: np.ndarray) -> np.ndarray:
+
+    print(type(x), x, "nearestcoord")
     
     if (x[0] % 1 >= 0.5):
         nearestX = mt.ceil(x[0])
@@ -126,11 +132,13 @@ def nearestCoord(x: np.array[1]) -> np.array[1]:
     if (nearestY >= 64): nearestY = 63
     elif (nearestY < 0): nearestY = 0
 
-    nearCoord = np.array(nearestX, nearestY)
+    nearCoord = np.array([nearestX, nearestY])
     return nearCoord
 
 # fetches the nearest adjacent position from the cache
-def cacheFetch(x: np.array[1]) -> np.array[1]:
+def cacheFetch(x: np.ndarray) -> np.ndarray:
+
+    print(type(x), x, "cachefetch")
     
     gridPos = nearestCoord(x)
     return cache[gridPos[0],gridPos[1]]

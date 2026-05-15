@@ -16,8 +16,12 @@ Y = np.array((0, 64))
 # generates a frame for quiver
 for x in range(64):
     for y in range(64):
-        temp = np.array((x, y))
-        gridentry = bs.monteCarloEstimator(temp, time)
+        iteration = np.array((x, y))
+        # tracing
+        print(type(iteration), iteration, "iterate")
+
+
+        gridentry = bs.monteCarloEstimator(iteration, time)
         U[x][y] = gridentry[0]
         V[x][y] = gridentry[1]
 
