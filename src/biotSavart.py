@@ -63,20 +63,27 @@ def recursiveSolver(x: np.array[1], time: int, n_samples: int) -> np.array[1]:
 def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
 
     print(type(x), x, "integralEstimator")
+    print(type(time), time, "IE")
 
     integral_samples = np.random.uniform(0, frame_size, size=(n_samples, 2))
     diff = x - integral_samples
     # changed to montecarloestimator, though subject to change more
     vorticity = monteCarloEstimator(x, time)
+    print(type(vorticity), vorticity, "vorticity")
     
-    kernel = diff / 2*mt.pi*np.linalg.norm(diff, axis=1)
-    cross_product = np.cross(vorticity, kernel)
+    kernel = diff / 2*mt.pi*np.linalg.norm(diff, axis=1, keepdims=True) + mt.exp(-100)
+    cross_product = vorticity * np.column_stack((-kernel[:, 1], kernel[:, 0]))
 
-    return cross_product / n_samples
+
+    print(np.mean(cross_product, axis=0), "integral estimation answer")
+    print(type(time), time, "TIME")
+
+    return np.mean(cross_product, axis=0)
 
 def monteCarloEstimator(x: np.ndarray, time: int) -> int:
 
     print(type(x), x, "MC estimator")
+    print(type(time), time, "TIME")
 
     if (time == 0):
         return initVor(x)
@@ -87,7 +94,8 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
             newX = fetchedCache[0]
 
     y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
-    newX = x - time_step * integralEstimation(y, time - time_step)
+    print(y, "random sampled point")
+    newX = x - (time_step * integralEstimation(y, time - time_step))
 
     # once we find this newX we have to insert it into the cache accordingly
 
@@ -101,13 +109,16 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
 # return of 0 means unsuccessful, anything else is good
 # updates the cache with a newer entry
 def cachingSolver(x: np.ndarray, time: int) -> int:
+
+    print(type(x), x, "cachingSolver")
+    print(type(time), time, "cachingSolverTIME")
     
-    if (cache[x[0]][x[1]] == 0):
-        cache[x[0]][x[1]] = [x, time]
+    if (cache[[x[0]], [x[1]]] == 0):
+        cache[[x[0]], [x[1]]] = [x, time]
         return 1
     
-    if (cache[x[0]][x[1]][1] < time):
-        cache[x[0]][x[1]] = [x, time]
+    if (cache[[x[0]], [x[1]]][1] < time):
+        cache[[x[0]], [x[1]]] = [x, time]
         return 1
     
     return 0
