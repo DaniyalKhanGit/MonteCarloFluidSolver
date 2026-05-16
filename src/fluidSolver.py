@@ -14,7 +14,7 @@ for x in range(64):
     for y in range(64):
         iteration = np.array((x, y))
         # tracing
-        print(type(iteration), iteration, "iterate")
+        # print(type(iteration), iteration, "iterate")
 
 
         frameheatmap[x][y] = bs.monteCarloEstimator(iteration, time)
