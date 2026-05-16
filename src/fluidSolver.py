@@ -5,13 +5,9 @@ import biotSavart as bs
 from biotSavart import cache, n_samples
 
 # inits the arrays
-time = 1
+time = 2
 
-U = np.array((64, 64))
-V = np.array((64, 64))
-X = np.array((64, 0))
-Y = np.array((0, 64))
-
+frameheatmap = np.zeros((64, 64))
 
 # generates a frame for quiver
 for x in range(64):
@@ -21,12 +17,12 @@ for x in range(64):
         print(type(iteration), iteration, "iterate")
 
 
-        gridentry = bs.monteCarloEstimator(iteration, time)
-        U[x][y] = gridentry[0]
-        V[x][y] = gridentry[1]
+        frameheatmap[x][y] = bs.monteCarloEstimator(iteration, time)
 
 
 
-plt.quiver(X, Y, U, V)
-plt.show
+
+plt.imshow(frameheatmap, cmap='coolwarm', origin='lower')
+plt.show()
+print("Success Finally")
 

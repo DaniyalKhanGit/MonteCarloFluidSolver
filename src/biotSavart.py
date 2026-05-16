@@ -6,10 +6,31 @@ time_step = 1
 cache = np.zeros((frame_size, frame_size))
 n_samples = 100
 
+
+# gaussian blob
 def initVor(x: np.ndarray) -> int: 
-    return x[0] + x[1]
+    cx = 32
+    cy = 32
+    r = 10
+
+    value = 0
+    value += np.exp(-((x[0] - (cx-r))**2 + (x[1]-(cy+r))**2) / 50)
+    value -= np.exp(-((x[0] - (cx+r))**2 + (x[1]-(cy+r))**2) / 50)
+    value -= np.exp(-((x[0] - (cx-r))**2 + (x[1]-(cy-r))**2) / 50)
+    value += np.exp(-((x[0] - (cx+r))**2 + (x[1]-(cy-r))**2) / 50)
+    return value
+
+
+
 
 # advection, biot-savart MC solver
+
+
+# EVERYTHING NEEDS TO BE REFACTORED
+# Plan:
+# -scrap biot-savart and all relevant calculations and remake
+# once those confirmed to work then focus on additional functions for this
+# then WoS method finally
 """
 def biotSavartSolverOLD(x: np.array[1], time: int, n_samples: int) -> int:
     for i in range(n_samples):
@@ -59,7 +80,7 @@ def recursiveSolver(x: np.array[1], time: int, n_samples: int) -> np.array[1]:
 
 # we entirely redoing the way that the biot-savart is calculated
 
-
+# Kernel rn bugging, need to debug urgently
 def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
 
     print(type(x), x, "integralEstimator")
@@ -71,14 +92,16 @@ def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
     vorticity = monteCarloEstimator(x, time)
     print(type(vorticity), vorticity, "vorticity")
     
-    kernel = diff / 2*mt.pi*np.linalg.norm(diff, axis=1, keepdims=True) + mt.exp(-100)
+    kernel = diff / (2*mt.pi*(np.linalg.norm(diff, axis=1, keepdims=True)**2) + mt.exp(-100))
+    print(np.mean(kernel, axis=0), "mean of kernel")
     cross_product = vorticity * np.column_stack((-kernel[:, 1], kernel[:, 0]))
+    print(cross_product)
 
 
     print(np.mean(cross_product, axis=0), "integral estimation answer")
     print(type(time), time, "TIME")
 
-    return np.mean(cross_product, axis=0)
+    return (np.mean(cross_product, axis=0) * frame_size**2)
 
 def monteCarloEstimator(x: np.ndarray, time: int) -> int:
 
@@ -88,18 +111,22 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
     if (time == 0):
         return initVor(x)
     # check the cache if theres any entry (ill do this after basic implement)
-    fetchedCache = cacheFetch(x)
-    if (fetchedCache != 0):
-        if (fetchedCache[1] == time - time_step):
-            newX = fetchedCache[0]
+    # fetchedCache = cacheFetch(x)
+    # if (fetchedCache != 0):
+    #     if (fetchedCache[1] == time - time_step):
+    #         newX = fetchedCache[0]
 
     y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
     print(y, "random sampled point")
     newX = x - (time_step * integralEstimation(y, time - time_step))
+    print(x)
+    print(newX)
+
+    exit()
 
     # once we find this newX we have to insert it into the cache accordingly
 
-    cachingSolver(newX, time - time_step)
+    # cachingSolver(newX, time - time_step)
 
     return monteCarloEstimator(newX,
                                (time - time_step))
@@ -113,12 +140,12 @@ def cachingSolver(x: np.ndarray, time: int) -> int:
     print(type(x), x, "cachingSolver")
     print(type(time), time, "cachingSolverTIME")
     
-    if (cache[[x[0]], [x[1]]] == 0):
-        cache[[x[0]], [x[1]]] = [x, time]
+    if (cache[int(x[0]), int(x[1])] == 0):
+        cache[int(x[0]), int(x[1])] = [x, time]
         return 1
     
-    if (cache[[x[0]], [x[1]]][1] < time):
-        cache[[x[0]], [x[1]]] = [x, time]
+    if (cache[int(x[0]), int(x[1])][1] < time):
+        cache[int(x[0]), int(x[1])] = [x, time]
         return 1
     
     return 0
