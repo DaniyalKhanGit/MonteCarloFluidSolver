@@ -6,8 +6,8 @@ from biotSavart import cache, n_samples
 import tracing
 from tracing import trace_file
 
-# inits the arrays
-time = 1
+# inits the arrays and params
+time = 3
 
 frameheatmap = np.zeros((64, 64))
 
@@ -18,8 +18,8 @@ def frameCreate():
         for y in range(64):
             iteration = np.array((x, y))
 
+            print(iteration)
             frameheatmap[x][y] = bs.monteCarloEstimator(iteration, time)
-
 
 
 frameCreate()

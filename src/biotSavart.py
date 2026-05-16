@@ -3,10 +3,12 @@ import math as mt
 import tracing
 from tracing import trace_file, trace
 
+outofFrameRecursion = False 
+
 frame_size = 64
 time_step = 1
 cache = {}
-n_samples = 1000
+n_samples = 100
 
 
 # gaussian blob
@@ -54,16 +56,16 @@ def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
     # print(cross_product)
 
 
-    trace(np.mean(cross_product, axis=0), "integral estimation answer and time:", time)
+    # trace(np.mean(cross_product, axis=0), "integral estimation answer and time:", time)
     return (np.mean(cross_product, axis=0) * frame_size**2)
 
 def monteCarloEstimator(x: np.ndarray, time: int) -> int:
 
-    # print(type(x), x, "MC estimator")
-    # print(type(time), time, "TIME")
-
     if (time == 0):
         return initVor(x)
+
+    if (not outofFrameRecursion and not 0 < x[0] < 64 and not 0 < x[1] < 64):
+        return 0
 
     fetchedCache = cacheFetch(x)
     if (fetchedCache != 0 and fetchedCache[1] == time - time_step):
@@ -72,10 +74,7 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
         y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
         newX = x - (time_step * integralEstimation(y, time - time_step))
         cacheSolver(newX, time - time_step)
-    # print(y, "random sampled point")
-    # print(x)
-    # print(newX)
-    trace(x - newX, "difference between x and newX")
+    # trace(x - newX, "difference between x and newX")
     return monteCarloEstimator(newX,
                                (time - time_step))
 
@@ -89,10 +88,11 @@ def cacheSolver(x: np.ndarray, time: int) -> int:
     
     gridCoord = nearestCoord(x)
 
-    if (gridCoord[0] >= 64): return 0
-    elif (gridCoord[0] < 0): return 0
-    if (gridCoord[1] >= 64): return 0
-    elif (gridCoord[1] < 0): return 0
+    if (not outofFrameRecursion):
+        if (gridCoord[0] >= 64): return 0
+        elif (gridCoord[0] < 0): return 0
+        if (gridCoord[1] >= 64): return 0
+        elif (gridCoord[1] < 0): return 0
 
     insert = (x, time)
 
@@ -128,7 +128,7 @@ def nearestCoord(x: np.ndarray) -> np.ndarray:
 # fetches the nearest adjacent position from the cache
 def cacheFetch(x: np.ndarray) -> np.ndarray:
 
-    trace(type(x), x, "cachefetch")
+    # trace(type(x), x, "cachefetch")
     
     gridPos = nearestCoord(x)
     if tuple(gridPos) in cache:
