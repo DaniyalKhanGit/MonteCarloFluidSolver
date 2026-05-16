@@ -8,7 +8,7 @@ outofFrameRecursion = False
 frame_size = 64
 time_step = 1
 cache = {}
-n_samples = 100
+n_samples = 1000
 
 
 # gaussian blob
@@ -55,7 +55,6 @@ def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
     cross_product = vorticities[:, np.newaxis] * np.column_stack((-kernel[:, 1], kernel[:, 0]))
     # print(cross_product)
 
-
     # trace(np.mean(cross_product, axis=0), "integral estimation answer and time:", time)
     return (np.mean(cross_product, axis=0) * frame_size**2)
 
@@ -68,22 +67,26 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
         return 0
 
     fetchedCache = cacheFetch(x)
-    if (fetchedCache != 0 and fetchedCache[1] == time - time_step):
-        newX = fetchedCache[0]
+    if (fetchedCache != 0 and fetchedCache[1] == time):
+        newX = fetchedCache[0] #redundant but ill keep just in case
+        vorticity = fetchedCache[2]
     else:
-        y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
-        newX = x - (time_step * integralEstimation(y, time - time_step))
-        cacheSolver(newX, time - time_step)
+        # y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
+        # theres actually no way
+        print(x, time)
+        newX = x - (time_step * integralEstimation(x, time - time_step))
+        vorticity = monteCarloEstimator(newX, time - time_step)
+        cacheSolver(newX, time, vorticity)
+
     # trace(x - newX, "difference between x and newX")
-    return monteCarloEstimator(newX,
-                               (time - time_step))
+    return vorticity
 
 # All cache related below -------------------------------------------------------
 
 # updates the cache with a newer entry
 # this is for input to cache
 # returns 1 if success, 0 otherwise (this is just for tracing/error handling)
-def cacheSolver(x: np.ndarray, time: int) -> int:
+def cacheSolver(x: np.ndarray, time: int, vorticity: int) -> int:
     # now that the cache is a dictionary, we can go about a new way of inputting values
     
     gridCoord = nearestCoord(x)
@@ -94,7 +97,7 @@ def cacheSolver(x: np.ndarray, time: int) -> int:
         if (gridCoord[1] >= 64): return 0
         elif (gridCoord[1] < 0): return 0
 
-    insert = (x, time)
+    insert = (x, time, vorticity)
 
     if tuple(gridCoord) in cache:
         # handling
@@ -113,14 +116,14 @@ def cacheSolver(x: np.ndarray, time: int) -> int:
 def nearestCoord(x: np.ndarray) -> np.ndarray:
     
     if (x[0] % 1 >= 0.5):
-        nearestX = mt.ceil(x[0])
+        nearestX = int(mt.ceil(x[0]))
     else:
-        nearestX = mt.floor(x[0])
+        nearestX = int(mt.floor(x[0]))
 
     if (x[1] % 1 >= 0.5):
-        nearestY = mt.ceil(x[1])
+        nearestY = int(mt.ceil(x[1]))
     else:
-        nearestY = mt.floor(x[1])
+        nearestY = int(mt.floor(x[1]))
 
     nearCoord = np.array([nearestX, nearestY])
     return nearCoord
