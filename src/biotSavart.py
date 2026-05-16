@@ -3,7 +3,7 @@ import math as mt
 
 frame_size = 64
 time_step = 1
-cache = np.zeros((frame_size, frame_size))
+cache = {}
 n_samples = 100
 
 
@@ -64,53 +64,52 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
 
     if (time == 0):
         return initVor(x)
-    # check the cache if theres any entry (ill do this after basic implement)
-    # fetchedCache = cacheFetch(x)
-    # if (fetchedCache != 0):
-    #     if (fetchedCache[1] == time - time_step):
-    #         newX = fetchedCache[0]
 
-    y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
+    fetchedCache = cacheFetch(x)
+    if (fetchedCache != 0 and fetchedCache[1] == time - time_step):
+        newX = fetchedCache[0]
+    else:
+        y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
+        newX = x - (time_step * integralEstimation(y, time - time_step))
+        cacheSolver(newX, time - time_step)
     # print(y, "random sampled point")
-    newX = x - (time_step * integralEstimation(y, time - time_step))
     # print(x)
     # print(newX)
-
-    # once we find this newX we have to insert it into the cache accordingly
-
-    # cachingSolver(newX, time - time_step)
-
     return monteCarloEstimator(newX,
                                (time - time_step))
 
-# caching rewrite on the way
+# All cache related below -------------------------------------------------------
 
-# caching handled here
-# return of 0 means unsuccessful, anything else is good
 # updates the cache with a newer entry
-'''
-def cachingSolver(x: np.ndarray, time: int) -> int:
-
-    print(type(x), x, "cachingSolver")
-    print(type(time), time, "cachingSolverTIME")
-    
-    if (cache[int(x[0]), int(x[1])] == 0):
-        cache[int(x[0]), int(x[1])] = [x, time]
-        return 1
-    
-    if (cache[int(x[0]), int(x[1])][1] < time):
-        cache[int(x[0]), int(x[1])] = [x, time]
-        return 1
-    
-    return 0
-'''
-
+# this is for input to cache
+# returns 1 if success, 0 otherwise (this is just for tracing/error handling)
 def cacheSolver(x: np.ndarray, time: int) -> int:
-    pass
+    # now that the cache is a dictionary, we can go about a new way of inputting values
+    
+    gridCoord = nearestCoord(x)
 
+    if (gridCoord[0] >= 64): return 0
+    elif (gridCoord[0] < 0): return 0
+    if (gridCoord[1] >= 64): return 0
+    elif (gridCoord[1] < 0): return 0
+
+    insert = (x, time)
+
+    if tuple(gridCoord) in cache:
+        # handling
+        if (cache[tuple(gridCoord)][1] < time):
+            # update case
+            cache.update({tuple(gridCoord): insert})
+            return 1
+        return 0
+
+    else:
+        cache.update({tuple(gridCoord): insert})
+        return 1
+
+
+# hard coded fineness for now, so its just flipping you to an int basically each time
 def nearestCoord(x: np.ndarray) -> np.ndarray:
-
-    print(type(x), x, "nearestcoord")
     
     if (x[0] % 1 >= 0.5):
         nearestX = mt.ceil(x[0])
@@ -122,12 +121,6 @@ def nearestCoord(x: np.ndarray) -> np.ndarray:
     else:
         nearestY = mt.floor(x[1])
 
-    if (nearestX >= 64): nearestX = 63
-    elif (nearestX < 0): nearestX = 0
-
-    if (nearestY >= 64): nearestY = 63
-    elif (nearestY < 0): nearestY = 0
-
     nearCoord = np.array([nearestX, nearestY])
     return nearCoord
 
@@ -137,4 +130,7 @@ def cacheFetch(x: np.ndarray) -> np.ndarray:
     print(type(x), x, "cachefetch")
     
     gridPos = nearestCoord(x)
-    return cache[gridPos[0],gridPos[1]]
+    if tuple(gridPos) in cache:
+        return cache[tuple(gridPos)]
+    else:
+        return 0

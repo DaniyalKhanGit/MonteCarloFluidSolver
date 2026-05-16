@@ -5,7 +5,7 @@ import biotSavart as bs
 from biotSavart import cache, n_samples
 
 # inits the arrays
-time = 2
+time = 1
 
 frameheatmap = np.zeros((64, 64))
 
