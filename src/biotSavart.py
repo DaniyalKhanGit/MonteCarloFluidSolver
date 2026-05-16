@@ -8,7 +8,7 @@ outofFrameRecursion = False
 frame_size = 64
 time_step = 1
 cache = {}
-n_samples = 50
+n_samples = 100
 
 
 # gaussian blob
@@ -44,14 +44,14 @@ def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
     diff = x - integral_samples
     
     vorticities = np.array([monteCarloEstimator(s, time) for s in integral_samples])
-    # print(type(vorticities), vorticities, "vorticity")
+    #print(type(vorticities), vorticities, "vorticity")
     
     kernel = diff / ((2*mt.pi*abs((np.linalg.norm(diff, axis=1, keepdims=True)**2))) + mt.exp(-100))
     # print(np.mean(kernel, axis=0), "mean of kernel")
     cross_product = vorticities[:, np.newaxis] * np.column_stack((-kernel[:, 1], kernel[:, 0]))
     # print(cross_product)
-
-    # trace(np.mean(cross_product, axis=0), "integral estimation answer and time:", time)
+    trace(x, time, "starter val")
+    trace(np.mean(cross_product, axis=0), "integral estimation answer and time:", time)
     return (np.mean(cross_product, axis=0) * frame_size**2)
 
 def monteCarloEstimator(x: np.ndarray, time: int) -> int:
@@ -69,9 +69,7 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
     elif (fetchedCache != 0 and fetchedCache[3] == time):
         vorticity = fetchedCache[4]
     else:
-        # y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
-        # theres actually no way
-        # print(x, time)
+        # changes to be made here
         newX = x - (time_step * integralEstimation(x, time - time_step))
         vorticity = monteCarloEstimator(newX, time - time_step)
         cacheSolver(x, time, vorticity)
