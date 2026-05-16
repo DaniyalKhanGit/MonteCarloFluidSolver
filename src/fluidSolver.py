@@ -31,9 +31,9 @@ def frameCreate2():
             framef2[x][y] = bs.monteCarloEstimator(iteration, 2)
 
 frameCreate()
-#frameCreate2()
-plt.imshow(frameheatmap, cmap='coolwarm', origin='lower')
-#plt.imshow(framef2 - frameheatmap, cmap='coolwarm', origin='lower')
+frameCreate2()
+#plt.imshow(frameheatmap, cmap='coolwarm', origin='lower')
+plt.imshow(framef2 - frameheatmap, cmap='coolwarm', origin='lower')
 plt.show()
 
 with open('cache_dump.txt', 'w') as f:

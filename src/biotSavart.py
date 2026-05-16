@@ -8,7 +8,7 @@ outofFrameRecursion = False
 frame_size = 64
 time_step = 1
 cache = {}
-n_samples = 1000
+n_samples = 50
 
 
 # gaussian blob
@@ -38,12 +38,8 @@ def initVor(x: np.ndarray) -> int:
 # we entirely redoing the way that the biot-savart is calculated
 
 # Kernel rn bugging, need to debug urgently
-
+# biot-savart 
 def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
-
-    # print(type(x), x, "integralEstimator")
-    # print(type(time), time, "IE")
-
     integral_samples = np.random.uniform(0, frame_size, size=(n_samples, 2))
     diff = x - integral_samples
     
@@ -68,15 +64,17 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
 
     fetchedCache = cacheFetch(x)
     if (fetchedCache != 0 and fetchedCache[1] == time):
-        newX = fetchedCache[0] #redundant but ill keep just in case
         vorticity = fetchedCache[2]
+    # to prevent us from throwing away values and making it ironically slower
+    elif (fetchedCache != 0 and fetchedCache[3] == time):
+        vorticity = fetchedCache[4]
     else:
         # y = np.random.uniform(0, frame_size, size=(1, 2)).flatten()
         # theres actually no way
-        print(x, time)
+        # print(x, time)
         newX = x - (time_step * integralEstimation(x, time - time_step))
         vorticity = monteCarloEstimator(newX, time - time_step)
-        cacheSolver(newX, time, vorticity)
+        cacheSolver(x, time, vorticity)
 
     # trace(x - newX, "difference between x and newX")
     return vorticity
@@ -97,17 +95,19 @@ def cacheSolver(x: np.ndarray, time: int, vorticity: int) -> int:
         if (gridCoord[1] >= 64): return 0
         elif (gridCoord[1] < 0): return 0
 
-    insert = (x, time, vorticity)
-
     if tuple(gridCoord) in cache:
         # handling
         if (cache[tuple(gridCoord)][1] < time):
             # update case
+            timePrevious = cache[tuple(gridCoord)][1]
+            vorticityPrevious = cache[tuple(gridCoord)][2]
+            insert = (x, time, vorticity, timePrevious, vorticityPrevious)
             cache.update({tuple(gridCoord): insert})
             return 1
         return 0
 
     else:
+        insert = (x, time, vorticity, 0, 0)
         cache.update({tuple(gridCoord): insert})
         return 1
 
