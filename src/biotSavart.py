@@ -1,10 +1,12 @@
 import numpy as np
 import math as mt
+import tracing
+from tracing import trace_file, trace
 
 frame_size = 64
 time_step = 1
 cache = {}
-n_samples = 100
+n_samples = 1000
 
 
 # gaussian blob
@@ -42,19 +44,17 @@ def integralEstimation(x: np.ndarray, time: int) -> np.ndarray:
 
     integral_samples = np.random.uniform(0, frame_size, size=(n_samples, 2))
     diff = x - integral_samples
-    # changed to montecarloestimator, though subject to change more
+    
     vorticities = np.array([monteCarloEstimator(s, time) for s in integral_samples])
     # print(type(vorticities), vorticities, "vorticity")
     
-    kernel = diff / (2*mt.pi*(np.linalg.norm(diff, axis=1, keepdims=True)**2) + mt.exp(-100))
+    kernel = diff / ((2*mt.pi*abs((np.linalg.norm(diff, axis=1, keepdims=True)**2))) + mt.exp(-100))
     # print(np.mean(kernel, axis=0), "mean of kernel")
     cross_product = vorticities[:, np.newaxis] * np.column_stack((-kernel[:, 1], kernel[:, 0]))
     # print(cross_product)
 
 
-    # print(np.mean(cross_product, axis=0), "integral estimation answer")
-    # print(type(time), time, "TIME")
-
+    trace(np.mean(cross_product, axis=0), "integral estimation answer and time:", time)
     return (np.mean(cross_product, axis=0) * frame_size**2)
 
 def monteCarloEstimator(x: np.ndarray, time: int) -> int:
@@ -75,6 +75,7 @@ def monteCarloEstimator(x: np.ndarray, time: int) -> int:
     # print(y, "random sampled point")
     # print(x)
     # print(newX)
+    trace(x - newX, "difference between x and newX")
     return monteCarloEstimator(newX,
                                (time - time_step))
 
@@ -127,7 +128,7 @@ def nearestCoord(x: np.ndarray) -> np.ndarray:
 # fetches the nearest adjacent position from the cache
 def cacheFetch(x: np.ndarray) -> np.ndarray:
 
-    print(type(x), x, "cachefetch")
+    trace(type(x), x, "cachefetch")
     
     gridPos = nearestCoord(x)
     if tuple(gridPos) in cache:
