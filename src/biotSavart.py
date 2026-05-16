@@ -8,7 +8,7 @@ outofFrameRecursion = False
 frame_size = 64
 time_step = 1
 cache = {}
-n_samples = 100
+n_samples = 50
 
 
 # gaussian blob

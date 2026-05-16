@@ -8,7 +8,7 @@ import tracing
 from tracing import trace_file
 
 # inits the arrays and params
-max_time = 3
+max_time = 5
 frames = []
 
 frameheatmap = np.zeros((64, 64))
